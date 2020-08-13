@@ -9,6 +9,7 @@
 package mysql
 
 import (
+	"bytes"
 	"context"
 	"database/sql/driver"
 	"errors"
@@ -126,6 +127,46 @@ func TestCleanCancel(t *testing.T) {
 		if mc.watching {
 			t.Error("expected watching is false, but true")
 		}
+	}
+}
+
+func TestCleanCancelEstablishedConn(t *testing.T) {
+	conn := new(mockConn)
+	mc := &mysqlConn{
+		closech:          make(chan struct{}),
+		netConn:          conn,
+		buf:              newBuffer(conn),
+		maxAllowedPacket: defaultMaxAllowedPacket,
+		established:      true,
+	}
+	mc.startWatcher()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	for i := 0; i < 3; i++ { // Repeat same behavior
+		err := mc.Ping(ctx)
+		if err != context.Canceled {
+			t.Errorf("expected context.Canceled, got %#v", err)
+		}
+
+		if mc.closed.IsSet() {
+			t.Error("expected mc is not closed, closed actually")
+		}
+
+		if mc.watching {
+			t.Error("expected watching is false, but true")
+		}
+	}
+
+	mc.cleanup()
+
+	if conn.writes != 1 {
+		t.Errorf("expected 1 writes to closing conn, got %d", conn.writes)
+	}
+	writtenQuitResp := len(conn.written)
+	if writtenQuitResp != 5 && !bytes.Equal(conn.written, []byte{1, 0, 0, 0, 1}) {
+		t.Errorf("got unexpected written quit response (bytes %d) %v", writtenQuitResp, conn.written)
 	}
 }
 
