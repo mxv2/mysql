@@ -84,7 +84,7 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	// Reading Handshake Initialization Packet
 	authData, plugin, err := mc.readHandshakePacket()
 	if err != nil {
-		errLog.Print("can not read handshake packet: ", err)
+		errLog.Print("can not read handshake packet: ", err.Error())
 		mc.cleanup()
 		return nil, err
 	}
