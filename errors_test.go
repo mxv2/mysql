@@ -26,7 +26,7 @@ func TestErrorsSetLogger(t *testing.T) {
 	logger := log.New(buffer, "prefix: ", 0)
 
 	// print
-	SetLogger(logger)
+	SetErrorLogger(logger)
 	errLog.Print("test")
 
 	// check result

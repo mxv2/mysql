@@ -1967,10 +1967,10 @@ func TestUnixSocketAuthFail(t *testing.T) {
 		// Set a new logger so we can capture its output.
 		buffer := bytes.NewBuffer(make([]byte, 0, 64))
 		newLogger := log.New(buffer, "prefix: ", 0)
-		SetLogger(newLogger)
+		SetErrorLogger(newLogger)
 
 		// Restore the logger.
-		defer SetLogger(oldLogger)
+		defer SetErrorLogger(oldLogger)
 
 		// Make a new DSN that uses the MySQL socket file and a bad password, which
 		// we can make by simply appending any character to the real password.

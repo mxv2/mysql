@@ -479,10 +479,15 @@ func (mc *mysqlConn) Ping(ctx context.Context) (err error) {
 	defer mc.finish()
 
 	if err = mc.writeCommandPacket(comPing); err != nil {
+		errLog.Print("can not write command ping: ", err.Error())
 		return mc.markBadConn(err)
 	}
 
-	return mc.readResultOK()
+	err = mc.readResultOK()
+	if err != nil {
+		errLog.Print("can not read result command ping: ", err.Error())
+	}
+	return err
 }
 
 // BeginTx implements driver.ConnBeginTx interface

@@ -50,8 +50,10 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	}
 
 	if err != nil {
+		errLog.Print("dial to "+mc.cfg.Addr+" error: ", err.Error())
 		return nil, err
 	}
+	infoLog.Print("dial to " + mc.cfg.Addr + " success")
 
 	// Enable TCP Keepalives on TCP connections
 	if tc, ok := mc.netConn.(*net.TCPConn); ok {
@@ -80,9 +82,11 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	// Reading Handshake Initialization Packet
 	authData, plugin, err := mc.readHandshakePacket()
 	if err != nil {
+		errLog.Print("can not read handshake packet: ", err)
 		mc.cleanup()
 		return nil, err
 	}
+	infoLog.Print("read handshake packet success")
 
 	if plugin == "" {
 		plugin = defaultAuthPlugin
@@ -96,23 +100,30 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 		plugin = defaultAuthPlugin
 		authResp, err = mc.auth(authData, plugin)
 		if err != nil {
+			errLog.Print("can not auth by plugin '"+plugin+"': ", err.Error())
 			mc.cleanup()
 			return nil, err
 		}
 	}
+	infoLog.Print("auth success")
+
 	if err = mc.writeHandshakeResponsePacket(authResp, plugin); err != nil {
+		errLog.Print("can not write handshake response by plugin '"+plugin+"': ", err.Error())
 		mc.cleanup()
 		return nil, err
 	}
+	infoLog.Print("write handshake response by plugin '" + plugin + "' success")
 
 	// Handle response to auth packet, switch methods if possible
 	if err = mc.handleAuthResult(authData, plugin); err != nil {
+		errLog.Print("can not handle auth result by plugin '"+plugin+"': ", err.Error())
 		// Authentication failed and MySQL has already closed the connection
 		// (https://dev.mysql.com/doc/internals/en/authentication-fails.html).
 		// Do not send COM_QUIT, just cleanup and return the error.
 		mc.cleanup()
 		return nil, err
 	}
+	infoLog.Print("handle auth result by plugin '" + plugin + "' success")
 
 	mc.established = true
 
@@ -134,9 +145,11 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	// Handle DSN Params
 	err = mc.handleParams()
 	if err != nil {
+		errLog.Print("can not handle params: ", err.Error())
 		mc.Close()
 		return nil, err
 	}
+	infoLog.Print("handle params success")
 
 	return mc, nil
 }

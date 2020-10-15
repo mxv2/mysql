@@ -38,19 +38,28 @@ var (
 )
 
 var errLog = Logger(log.New(os.Stderr, "[mysql] ", log.Ldate|log.Ltime|log.Lshortfile))
+var infoLog = Logger(log.New(os.Stdout, "[mysql] ", log.Ldate|log.Ltime|log.Lshortfile))
 
 // Logger is used to log critical error messages.
 type Logger interface {
 	Print(v ...interface{})
 }
 
-// SetLogger is used to set the logger for critical errors.
+// SetErrorLogger is used to set the logger for critical errors.
 // The initial logger is os.Stderr.
-func SetLogger(logger Logger) error {
+func SetErrorLogger(logger Logger) error {
 	if logger == nil {
 		return errors.New("logger is nil")
 	}
 	errLog = logger
+	return nil
+}
+
+func SetInfoLogger(logger Logger) error {
+	if logger == nil {
+		return errors.New("logger is nil")
+	}
+	infoLog = logger
 	return nil
 }
 
