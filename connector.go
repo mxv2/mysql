@@ -32,6 +32,8 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	}
 	mc.parseTime = mc.cfg.ParseTime
 
+	ctx = NewTrace(ctx)
+
 	// Connect to Server
 	dialsLock.RLock()
 	dial, ok := dials[mc.cfg.Net]

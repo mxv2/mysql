@@ -473,6 +473,7 @@ func (mc *mysqlConn) Ping(ctx context.Context) (err error) {
 		return driver.ErrBadConn
 	}
 
+	ctx = NewTrace(ctx)
 	if err = mc.watchCancel(ctx); err != nil {
 		return
 	}
