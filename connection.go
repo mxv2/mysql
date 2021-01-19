@@ -37,12 +37,13 @@ type mysqlConn struct {
 	reset            bool // set when the Go SQL package calls ResetSession
 
 	// for context support (Go 1.8+)
-	watching bool
-	watcher  chan<- context.Context
-	closech  chan struct{}
-	finished chan<- struct{}
-	canceled atomicError // set non-nil if conn is canceled
-	closed   atomicBool  // set when conn is closed, before closech is closed
+	watching    bool
+	watcher     chan<- context.Context
+	closech     chan struct{}
+	finished    chan<- struct{}
+	canceled    atomicError // set non-nil if conn is canceled
+	closed      atomicBool  // set when conn is closed, before closech is closed
+	established bool        // set when auth exchange was OK
 }
 
 // Handles parameters set in DSN after the connection is established
@@ -143,6 +144,12 @@ func (mc *mysqlConn) cleanup() {
 
 	// Makes cleanup idempotent
 	close(mc.closech)
+	if mc.established {
+		err := mc.writeCommandPacket(comQuit)
+		if err != nil {
+			errLog.Print(err)
+		}
+	}
 	if mc.netConn == nil {
 		return
 	}
